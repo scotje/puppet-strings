@@ -28,7 +28,8 @@ module PuppetStrings::Json
   # TODO: document
   # @return [Array] array of tag hashes
   def self.tags_to_hashes(tags)
-    tags.map do |t|
+    # Skip over the API tags that are public
+    tags.select { |t| (t.tag_name != 'api' || t.text != 'public') }.map do |t|
       next t.to_hash if t.respond_to?(:to_hash)
 
       tag = { tag_name: t.tag_name }
@@ -42,29 +43,25 @@ module PuppetStrings::Json
   # Converts a YARD::Docstring (or String) to a docstring hash for JSON output.
   # @param [YARD::Docstring, String] docstring The docstring to convert to a hash.
   # @return [Hash] Returns a hash representation of the given docstring.
-  def self.docstring_to_hash(docstring)
+  def self.docstring_to_hash(docstring, select_tags=nil)
     hash = {}
     hash[:text] = docstring
     if docstring.is_a? YARD::Docstring
-      # Skip over the API tags that are public
-      tags = tags_to_hashes(docstring.tags.select { |t| (t.tag_name != 'api' || t.text != 'public') &&
-                                                        (t.tag_name != 'param' && t.tag_name != 'return')})
+      tags = tags_to_hashes(docstring.tags.select { |t| select_tags.nil? || select_tags.include?(t.tag_name) })
+
       hash[:tags] = tags unless tags.empty?
     end
     hash
   end
 
-  def self.signature_docstring_to_hash(docstring)
-    hash = {}
-    hash[:text] = docstring
-    if docstring.is_a? YARD::Docstring
-      # Skip over the API tags that are public
-      tags = tags_to_hashes(docstring.tags.select { |t| (t.tag_name != 'api' || t.text != 'public') &&
-                                                        (t.tag_name == 'param' || t.tag_name == 'return')})
-
-      #tags = tags.map { |t| t.reject {|k,v| k == :tag_name || k == :name } }
-      hash[:tags] = tags unless tags.empty?
-    end
-    hash
-  end
+  # def self.signature_docstring_to_hash(docstring)
+  #   hash = {}
+  #   hash[:text] = docstring
+  #   if docstring.is_a? YARD::Docstring
+  #     # For signature entries we only care about params and returns.
+  #     tags = tags_to_hashes(docstring.tags.select { |t| (t.tag_name == 'param' || t.tag_name == 'return') })
+  #     hash[:tags] = tags unless tags.empty?
+  #   end
+  #   hash
+  # end
 end
