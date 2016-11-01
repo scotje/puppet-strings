@@ -78,12 +78,17 @@ class PuppetStrings::Yard::CodeObjects::Function < PuppetStrings::Yard::CodeObje
   # @return [Hash] Returns a hash representation of the code object.
   def to_hash
     hash = {}
+    hash[:signatures] = Array.new
+
+
     hash[:name] = name
     hash[:file] = file
     hash[:line] = line
     hash[:type] = @function_type.to_s
     signature = self.signature
-    hash[:signature] = signature unless signature.empty?
+    hash[:signatures] << { :signature => signature, :docstring =>  PuppetStrings::Json.signature_docstring_to_hash(docstring)}
+
+
     hash[:docstring] = PuppetStrings::Json.docstring_to_hash(docstring)
     defaults = Hash[*parameters.select{ |p| !p[1].nil? }.flatten]
     hash[:defaults] = defaults unless defaults.empty?
