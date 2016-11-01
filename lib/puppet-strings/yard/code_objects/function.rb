@@ -85,9 +85,16 @@ class PuppetStrings::Yard::CodeObjects::Function < PuppetStrings::Yard::CodeObje
     hash[:file] = file
     hash[:line] = line
     hash[:type] = @function_type.to_s
-    signature = self.signature
-    hash[:signatures] << { :signature => signature, :docstring =>  PuppetStrings::Json.signature_docstring_to_hash(docstring)}
 
+    if self.has_tag? :overload
+      # loop over overloads and insert into the signatures array
+      require 'pry' ; binding.pry
+      hash[:signatures] = self.tags(:overload).map{|o| {:signature => o.signature, :docstring => PuppetStrings::Json.docstring_to_hash(o.docstring)}}
+
+
+    else
+      hash[:signatures] << { :signature => self.signature, :docstring =>  PuppetStrings::Json.signature_docstring_to_hash(docstring)}
+    end
 
     hash[:docstring] = PuppetStrings::Json.docstring_to_hash(docstring)
     defaults = Hash[*parameters.select{ |p| !p[1].nil? }.flatten]
